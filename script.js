@@ -10,6 +10,8 @@ let displayValue = '0';
 let firstOperand = null;
 let operator = null;
 let waitingForSecondOperand = false;
+let justCalculated = false;
+
 
 function add(a, b) {
   return a + b;
@@ -55,16 +57,18 @@ function updateDisplay() {
 updateDisplay()
 
 function inputNumber(number) {
-    // If the decimal button is clicked and the display already has a decimal, do nothing.
     if (number === '.' && displayValue.includes('.')) {
-        return;
+        return; 
     }
 
-    if (waitingForSecondOperand === true) {
-        displayValue = number;
+    if (waitingForSecondOperand === true || justCalculated) {
+        displayValue = number;   
         waitingForSecondOperand = false;
+        justCalculated = false; 
     } else {
-        displayValue = displayValue === '0' && number !== '.' ? number : displayValue + number;
+        displayValue = displayValue === '0' && number !== '.' 
+            ? number 
+            : displayValue + number;
     }
 }
 
@@ -80,7 +84,9 @@ function resetCalculator() {
   firstOperand = null;
   operator = null;
   waitingForSecondOperand = false;
+  justCalculated = false; 
 }
+
 
 clearButton.addEventListener('click', () => {
   resetCalculator();
@@ -116,8 +122,8 @@ operatorButtons.forEach(button => {
 
 function handleEquals() {
   const inputValue = parseFloat(displayValue);
-   
-   if (firstOperand === null || operator === null) {
+
+  if (firstOperand === null || operator === null) {
     return; 
   }
   const result = operate(operator, firstOperand, inputValue);
@@ -126,9 +132,12 @@ function handleEquals() {
   firstOperand = null; 
   operator = null;
   waitingForSecondOperand = false;
+
   updateDisplay();
-  
+
+  justCalculated = true; // 🔥 activamos la bandera
 }
+
 
 equalBtn.addEventListener("click", () =>{
   handleEquals();
@@ -141,4 +150,51 @@ function clearEntry() {
 clearEntryButton.addEventListener('click', () => {
     clearEntry();
     updateDisplay();
+});
+
+function backspace() {
+  if (displayValue.length > 1) {
+    displayValue = displayValue.slice(0, -1); // elimina el último carácter
+  } else {
+    displayValue = '0'; // si queda un solo dígito, reinicia a 0
+  }
+  updateDisplay();
+}
+
+document.addEventListener("keydown", (event) => {
+  const key = event.key;
+
+  // Números
+  if (!isNaN(key)) {
+    inputNumber(key);
+    updateDisplay();
+  }
+
+  // Punto decimal
+  if (key === ".") {
+    inputNumber(".");
+    updateDisplay();
+  }
+
+  // Operadores
+  if (["+", "-", "*", "/"].includes(key)) {
+    const op = key === "*" ? "×" : key === "/" ? "÷" : key;
+    handleOperator(op);
+  }
+
+  // Igual (= o Enter)
+  if (key === "=" || key === "Enter") {
+    handleEquals();
+  }
+
+  // Backspace del teclado
+  if (key === "Backspace") {
+    backspace();
+  }
+
+  // Escape = reset
+  if (key === "Escape") {
+    resetCalculator();
+    updateDisplay();
+  }
 });
